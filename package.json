@@ -1,0 +1,19 @@
+{
+  "name": "e-commerce-typescript-api",
+  "version": "1.0.0",
+  "description": "e-commerce RESTfull API made with nodeJs, typescript, prisma and fastify",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikiasyonas/E-Commerce-Typescript-API.git"
+  },
+  "author": "Mikias Yonas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mikiasyonas/E-Commerce-Typescript-API/issues"
+  },
+  "homepage": "https://github.com/mikiasyonas/E-Commerce-Typescript-API#readme"
+}
