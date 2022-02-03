@@ -2,7 +2,8 @@
 exports.__esModule = true;
 exports.errorResponse = exports.successResponse = void 0;
 var contants_1 = require("../helpers/contants");
-function successResponse(rep, payload, message) {
+function successResponse(rep, message, payload) {
+    if (payload === void 0) { payload = {}; }
     var response = {
         success: true,
         message: message,

@@ -1,6 +1,6 @@
 import { STATUS_CODE } from "../helpers/contants"
 
-export function successResponse (rep:any, payload:any, message:string) {
+export function successResponse (rep:any, message:string, payload:any = {}) {
   const response = {
     success: true,
     message: message,

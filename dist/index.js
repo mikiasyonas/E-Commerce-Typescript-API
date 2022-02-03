@@ -64,6 +64,7 @@ var pino_1 = __importDefault(require("pino"));
 var client_1 = require("@prisma/client");
 var hashGenerator_1 = require("./utils/hashGenerator");
 var responses_1 = require("./utils/responses");
+var contants_1 = require("./helpers/contants");
 var confirmationCodeGenerator_1 = require("./utils/confirmationCodeGenerator");
 dotenv.config();
 var server = (0, fastify_1["default"])({
@@ -101,7 +102,7 @@ server.post('/user', {}, function (req, rep) { return __awaiter(void 0, void 0, 
                     })];
             case 2:
                 result = _b.sent();
-                return [2 /*return*/, (0, responses_1.successResponse)(rep, result, 'Successfully registered user')];
+                return [2 /*return*/, (0, responses_1.successResponse)(rep, 'Successfully registered user', result)];
             case 3:
                 err_1 = _b.sent();
                 req.log.error(err_1);
@@ -111,21 +112,178 @@ server.post('/user', {}, function (req, rep) { return __awaiter(void 0, void 0, 
     });
 }); });
 // Activate account
-server.put('/user/activate', function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
+server.put('/user/activate/:id', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
+    var id, confirmationCode, user, updatedUser, err_2;
     return __generator(this, function (_a) {
-        try {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 5, , 6]);
+                id = req.params.id;
+                confirmationCode = req.body.confirmationCode;
+                return [4 /*yield*/, prisma.user.findFirst({
+                        where: { id: Number(id) }
+                    })];
+            case 1:
+                user = _a.sent();
+                if (!user) return [3 /*break*/, 3];
+                if (user.confirmationCode != confirmationCode) {
+                    return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.BAD_REQUEST, 'Incorrect Confirmation Code Entered')];
+                }
+                return [4 /*yield*/, prisma.user.update({
+                        where: { id: Number(id) },
+                        data: { activated: true }
+                    })];
+            case 2:
+                updatedUser = _a.sent();
+                return [2 /*return*/, (0, responses_1.successResponse)(rep, "User account activated successfully!")];
+            case 3: return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
+            case 4: return [3 /*break*/, 6];
+            case 5:
+                err_2 = _a.sent();
+                req.log.error(err_2);
+                return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
+            case 6: return [2 /*return*/];
         }
-        catch (err) {
-            req.log.error(err);
-            return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
+    });
+}); });
+// Request Password Reset
+server.put('/user/request-password-reset/:email', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
+    var email, code, updatedUser, err_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                email = req.params.email;
+                code = (0, confirmationCodeGenerator_1.generateConfirmationCode)();
+                return [4 /*yield*/, prisma.user.update({
+                        where: { email: email },
+                        data: { passwordResetCode: code }
+                    })];
+            case 1:
+                updatedUser = _a.sent();
+                // send the password reset code to email
+                return [2 /*return*/, (0, responses_1.successResponse)(rep, 'Password reset confirmation sent!')];
+            case 2:
+                err_3 = _a.sent();
+                req.log.error(err_3);
+                return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
+            case 3: return [2 /*return*/];
         }
-        return [2 /*return*/];
     });
 }); });
 // Reset Password
-// const PORT = process.env.APP_PORT;
+server.put('/user/reset-password/:email', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
+    var email, code, password, user, hashedPassword, updatedUser, err_4;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 6, , 7]);
+                email = req.params.email;
+                code = req.body.passwordResetCode;
+                password = req.body.password;
+                return [4 /*yield*/, prisma.user.findFirst({
+                        where: { email: email }
+                    })];
+            case 1:
+                user = _a.sent();
+                return [4 /*yield*/, (0, hashGenerator_1.hashText)(password)];
+            case 2:
+                hashedPassword = _a.sent();
+                if (!user) return [3 /*break*/, 4];
+                if (user.passwordResetCode != code) {
+                    return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.BAD_REQUEST, 'Incorrect confirmation code entered!')];
+                }
+                return [4 /*yield*/, prisma.user.update({
+                        where: { email: email },
+                        data: { password: hashedPassword }
+                    })];
+            case 3:
+                updatedUser = _a.sent();
+                return [2 /*return*/, (0, responses_1.successResponse)(rep, 'Password changed successfully')];
+            case 4:
+                console.log('err');
+                return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
+            case 5: return [3 /*break*/, 7];
+            case 6:
+                err_4 = _a.sent();
+                req.log.error(err_4);
+                return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
+            case 7: return [2 /*return*/];
+        }
+    });
+}); });
+// Add user preference
+server.post('/user-preference', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
+    var userId, preferenceId, userPreference, err_5;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                userId = req.body.userId;
+                preferenceId = req.body.preferenceId;
+                return [4 /*yield*/, prisma.usersPreferences.create({
+                        data: {
+                            userId: userId,
+                            preferenceId: preferenceId
+                        }
+                    })];
+            case 1:
+                userPreference = _a.sent();
+                return [2 /*return*/, (0, responses_1.successResponse)(rep, 'Successfully created user preference', userPreference)];
+            case 2:
+                err_5 = _a.sent();
+                return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); });
+// Add preference
+server.post('/preference', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
+    var name, preference, err_6;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                name = req.body.name;
+                return [4 /*yield*/, prisma.preference.create({
+                        data: {
+                            name: name
+                        }
+                    })];
+            case 1:
+                preference = _a.sent();
+                return [2 /*return*/, (0, responses_1.successResponse)(rep, 'Successfully created a preference', preference)];
+            case 2:
+                err_6 = _a.sent();
+                return [2 /*return*/, (0, responses_1.errorResponse)(err_6)];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); });
+// User info
+server.get('/user-info/:id', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
+    var id, user, err_7;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                id = req.params.id;
+                return [4 /*yield*/, prisma.user.findFirst({
+                        where: { id: Number(id) },
+                        include: { preferences: true }
+                    })];
+            case 1:
+                user = _a.sent();
+                return [2 /*return*/, (0, responses_1.successResponse)(rep, 'User information', user)];
+            case 2:
+                err_7 = _a.sent();
+                return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); });
 var start = function (port) { return __awaiter(void 0, void 0, void 0, function () {
-    var err_2;
+    var err_8;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -135,8 +293,8 @@ var start = function (port) { return __awaiter(void 0, void 0, void 0, function 
                 _a.sent();
                 return [3 /*break*/, 3];
             case 2:
-                err_2 = _a.sent();
-                server.log.error(err_2);
+                err_8 = _a.sent();
+                server.log.error(err_8);
                 process.exit(1);
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
