@@ -16,7 +16,7 @@ model User {
   email String @unique
   password String
   activated Boolean @default(false)
-  confirmationCode Int
+  confirmationCode String
   preferences UsersPreferences[]
   dob DateTime
 }
