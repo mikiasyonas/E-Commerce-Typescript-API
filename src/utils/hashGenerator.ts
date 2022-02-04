@@ -9,3 +9,11 @@ export async function hashText(text:string, round = 10) {
     throw Error(err.message);
   }
 }
+
+export async function compareHash(text:string, hash:string) {
+  try {
+    return await bcrypt.compare(text, hash);
+  } catch (e:any) {
+    throw new Error(e.message);
+  }
+}

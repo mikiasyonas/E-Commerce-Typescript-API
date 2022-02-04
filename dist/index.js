@@ -66,6 +66,7 @@ var hashGenerator_1 = require("./utils/hashGenerator");
 var responses_1 = require("./utils/responses");
 var contants_1 = require("./helpers/contants");
 var confirmationCodeGenerator_1 = require("./utils/confirmationCodeGenerator");
+var jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 dotenv.config();
 var server = (0, fastify_1["default"])({
     logger: (0, pino_1["default"])({
@@ -73,7 +74,7 @@ var server = (0, fastify_1["default"])({
     })
 });
 var prisma = new client_1.PrismaClient();
-var Port = server.get('/', function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
+server.get('/', function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, 'get request'];
     });
@@ -111,9 +112,41 @@ server.post('/user', {}, function (req, rep) { return __awaiter(void 0, void 0, 
         }
     });
 }); });
+// User login
+server.post('/user/login', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, email, password, user, accessToken, err_2;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _b.trys.push([0, 3, , 4]);
+                _a = req.body, email = _a.email, password = _a.password;
+                return [4 /*yield*/, prisma.user.findFirst({
+                        where: { email: email }
+                    })];
+            case 1:
+                user = _b.sent();
+                if (!user) {
+                    return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.BAD_REQUEST, 'No account found with this email')];
+                }
+                if (!((0, hashGenerator_1.compareHash)(password, user.password))) {
+                    return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.BAD_REQUEST, 'Password Incorrect')];
+                }
+                return [4 /*yield*/, jsonwebtoken_1["default"].sign({
+                        id: user.id
+                    }, 'secret')];
+            case 2:
+                accessToken = _b.sent();
+                return [2 /*return*/, (0, responses_1.successResponse)(rep, 'Successfully logged in', { accessToken: accessToken })];
+            case 3:
+                err_2 = _b.sent();
+                return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); });
 // Activate account
 server.put('/user/activate/:id', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
-    var id, confirmationCode, user, updatedUser, err_2;
+    var id, confirmationCode, user, updatedUser, err_3;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -139,8 +172,8 @@ server.put('/user/activate/:id', {}, function (req, rep) { return __awaiter(void
             case 3: return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
             case 4: return [3 /*break*/, 6];
             case 5:
-                err_2 = _a.sent();
-                req.log.error(err_2);
+                err_3 = _a.sent();
+                req.log.error(err_3);
                 return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
             case 6: return [2 /*return*/];
         }
@@ -148,7 +181,7 @@ server.put('/user/activate/:id', {}, function (req, rep) { return __awaiter(void
 }); });
 // Request Password Reset
 server.put('/user/request-password-reset/:email', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
-    var email, code, updatedUser, err_3;
+    var email, code, updatedUser, err_4;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -164,8 +197,8 @@ server.put('/user/request-password-reset/:email', {}, function (req, rep) { retu
                 // send the password reset code to email
                 return [2 /*return*/, (0, responses_1.successResponse)(rep, 'Password reset confirmation sent!')];
             case 2:
-                err_3 = _a.sent();
-                req.log.error(err_3);
+                err_4 = _a.sent();
+                req.log.error(err_4);
                 return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
             case 3: return [2 /*return*/];
         }
@@ -173,7 +206,7 @@ server.put('/user/request-password-reset/:email', {}, function (req, rep) { retu
 }); });
 // Reset Password
 server.put('/user/reset-password/:email', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
-    var email, code, password, user, hashedPassword, updatedUser, err_4;
+    var email, code, password, user, hashedPassword, updatedUser, err_5;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -205,8 +238,8 @@ server.put('/user/reset-password/:email', {}, function (req, rep) { return __awa
                 return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
             case 5: return [3 /*break*/, 7];
             case 6:
-                err_4 = _a.sent();
-                req.log.error(err_4);
+                err_5 = _a.sent();
+                req.log.error(err_5);
                 return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
             case 7: return [2 /*return*/];
         }
@@ -214,7 +247,7 @@ server.put('/user/reset-password/:email', {}, function (req, rep) { return __awa
 }); });
 // Add user preference
 server.post('/user-preference', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
-    var userId, preferenceId, userPreference, err_5;
+    var userId, preferenceId, userPreference, err_6;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -231,7 +264,7 @@ server.post('/user-preference', {}, function (req, rep) { return __awaiter(void 
                 userPreference = _a.sent();
                 return [2 /*return*/, (0, responses_1.successResponse)(rep, 'Successfully created user preference', userPreference)];
             case 2:
-                err_5 = _a.sent();
+                err_6 = _a.sent();
                 return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
             case 3: return [2 /*return*/];
         }
@@ -239,7 +272,7 @@ server.post('/user-preference', {}, function (req, rep) { return __awaiter(void 
 }); });
 // Add preference
 server.post('/preference', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
-    var name, preference, err_6;
+    var name, preference, err_7;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -254,20 +287,41 @@ server.post('/preference', {}, function (req, rep) { return __awaiter(void 0, vo
                 preference = _a.sent();
                 return [2 /*return*/, (0, responses_1.successResponse)(rep, 'Successfully created a preference', preference)];
             case 2:
-                err_6 = _a.sent();
-                return [2 /*return*/, (0, responses_1.errorResponse)(err_6)];
+                err_7 = _a.sent();
+                return [2 /*return*/, (0, responses_1.errorResponse)(err_7)];
             case 3: return [2 /*return*/];
         }
     });
 }); });
 // User info
 server.get('/user-info/:id', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
-    var id, user, err_7;
+    var id, authHeader, bearer, userId, token, user, err_8;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
                 id = req.params.id;
+                authHeader = req.headers['authorization'];
+                bearer = authHeader && authHeader.split(' ')[0];
+                userId = null;
+                if (bearer != 'Bearer') {
+                    return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.UNAUTHORIZED, 'Auth token required')];
+                }
+                token = authHeader && authHeader.split(' ')[1];
+                if (token == null) {
+                    return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.UNAUTHORIZED, 'Auth token required')];
+                }
+                jsonwebtoken_1["default"].verify(token, 'secret', function (err, payload) { return __awaiter(void 0, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        if (err) {
+                            return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.FORBIDDEN, 'Unable to verify token')];
+                        }
+                        if (payload) {
+                            userId = payload.id;
+                        }
+                        return [2 /*return*/];
+                    });
+                }); });
                 return [4 /*yield*/, prisma.user.findFirst({
                         where: { id: Number(id) },
                         include: { preferences: true }
@@ -276,14 +330,14 @@ server.get('/user-info/:id', {}, function (req, rep) { return __awaiter(void 0, 
                 user = _a.sent();
                 return [2 /*return*/, (0, responses_1.successResponse)(rep, 'User information', user)];
             case 2:
-                err_7 = _a.sent();
+                err_8 = _a.sent();
                 return [2 /*return*/, (0, responses_1.errorResponse)(rep)];
             case 3: return [2 /*return*/];
         }
     });
 }); });
 var start = function (port) { return __awaiter(void 0, void 0, void 0, function () {
-    var err_8;
+    var err_9;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -293,8 +347,8 @@ var start = function (port) { return __awaiter(void 0, void 0, void 0, function 
                 _a.sent();
                 return [3 /*break*/, 3];
             case 2:
-                err_8 = _a.sent();
-                server.log.error(err_8);
+                err_9 = _a.sent();
+                server.log.error(err_9);
                 process.exit(1);
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];

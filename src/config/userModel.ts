@@ -23,3 +23,7 @@ export interface UserPassResetAttribute {
 // export interface UserPreferenceAttribute {
 //   id: number,
 // }
+
+export interface UserHeaderAttribute {
+  Authorization: string
+}

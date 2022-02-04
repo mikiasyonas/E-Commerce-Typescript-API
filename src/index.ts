@@ -4,10 +4,12 @@ import pino from 'pino'
 import { PrismaClient } from '@prisma/client'
 import { UserAttribute, UserParamAttribute, UserActivateAttribute, UserPassResetAttribute } from './config/userModel'
 import { PreferenceAttribute } from './config/preferenceModel'
-import {hashText} from './utils/hashGenerator'
+import {hashText,compareHash} from './utils/hashGenerator'
 import { successResponse, errorResponse } from './utils/responses'
 import { STATUS_CODE } from './helpers/contants'
 import { generateConfirmationCode } from './utils/confirmationCodeGenerator'
+
+import jwt from 'jsonwebtoken'
 
 dotenv.config();
 const server = fastify({
@@ -17,7 +19,6 @@ const server = fastify({
 });
 
 const prisma = new PrismaClient();
-const Port = 
 
 
 server.get('/', async (req, rep) => {
@@ -48,6 +49,35 @@ server.post<{Body: UserAttribute}>('/user', {}, async (req, rep) => {
     return successResponse(rep, 'Successfully registered user', result);
   } catch(err:any) {
     req.log.error(err);
+    return errorResponse(rep);
+  }
+});
+
+// User login
+server.post<{
+  Body: UserAttribute
+}>('/user/login', {}, async(req, rep) => {
+  try {
+    const {email, password} = req.body;
+
+    const user = await prisma.user.findFirst({
+      where: {email: email}
+    });
+
+    if(!user) {
+      return errorResponse(rep, STATUS_CODE.BAD_REQUEST, 'No account found with this email');
+    }
+    
+    if(!(compareHash(password, user.password))) {
+      return errorResponse(rep, STATUS_CODE.BAD_REQUEST, 'Password Incorrect');
+    }
+
+    const accessToken = await jwt.sign({
+      id: user.id
+    }, 'secret');
+
+    return successResponse(rep, 'Successfully logged in', {accessToken: accessToken});
+  } catch(err) {
     return errorResponse(rep);
   }
 })
@@ -195,6 +225,30 @@ server.get<{
 }>('/user-info/:id', {}, async(req, rep) => {
   try {
     const id = req.params.id;
+    // const authHeader = req.headers['authorization'];
+    // const bearer = authHeader && authHeader.split(' ')[0];
+    // var userId = null;
+
+    // if(bearer != 'Bearer') {
+    //   return errorResponse(rep, STATUS_CODE.UNAUTHORIZED, 'Auth token required');
+    // }
+
+    // const token = authHeader && authHeader.split(' ')[1];
+
+    // if(token == null) {
+    //   return errorResponse(rep, STATUS_CODE.UNAUTHORIZED, 'Auth token required');
+    // }
+
+    // jwt.verify(token, 'secret', async (err, payload) => {
+    //   if(err) {
+    //     return errorResponse(rep, STATUS_CODE.FORBIDDEN, 'Unable to verify token');
+    //   }
+
+    //   if (payload) {
+    //     userId = payload.id; 
+    //   }
+    // })
+
     const user = await prisma.user.findFirst({
       where: { id: Number(id) },
       include: { preferences:true }
@@ -204,6 +258,8 @@ server.get<{
     return errorResponse(rep);
   }
 });
+
+
 
 const start = async(port:number) => {
   try {

@@ -1,0 +1,14 @@
+{
+	"definitions": {},
+	"info": {
+		"description": "e-commerce RESTfull API made with nodeJs, typescript, prisma and fastify",
+		"license": {
+			"name": "ISC"
+		},
+		"title": "e-commerce-typescript-api",
+		"version": "1.0.0"
+	},
+	"paths": {},
+	"swagger": "2.0",
+	"securityDefinitions": {}
+}
