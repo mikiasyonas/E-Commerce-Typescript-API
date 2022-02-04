@@ -295,33 +295,12 @@ server.post('/preference', {}, function (req, rep) { return __awaiter(void 0, vo
 }); });
 // User info
 server.get('/user-info/:id', {}, function (req, rep) { return __awaiter(void 0, void 0, void 0, function () {
-    var id, authHeader, bearer, userId, token, user, err_8;
+    var id, user, err_8;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
                 id = req.params.id;
-                authHeader = req.headers['authorization'];
-                bearer = authHeader && authHeader.split(' ')[0];
-                userId = null;
-                if (bearer != 'Bearer') {
-                    return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.UNAUTHORIZED, 'Auth token required')];
-                }
-                token = authHeader && authHeader.split(' ')[1];
-                if (token == null) {
-                    return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.UNAUTHORIZED, 'Auth token required')];
-                }
-                jsonwebtoken_1["default"].verify(token, 'secret', function (err, payload) { return __awaiter(void 0, void 0, void 0, function () {
-                    return __generator(this, function (_a) {
-                        if (err) {
-                            return [2 /*return*/, (0, responses_1.errorResponse)(rep, contants_1.STATUS_CODE.FORBIDDEN, 'Unable to verify token')];
-                        }
-                        if (payload) {
-                            userId = payload.id;
-                        }
-                        return [2 /*return*/];
-                    });
-                }); });
                 return [4 /*yield*/, prisma.user.findFirst({
                         where: { id: Number(id) },
                         include: { preferences: true }
